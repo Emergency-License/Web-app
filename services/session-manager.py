@@ -72,9 +72,12 @@ class DPSSessionManager:
         log("Starting session manager...")
         self.playwright = sync_playwright().start()
         self.browser = self.playwright.chromium.launch(
-            headless=False,  # Visible so reCAPTCHA scores well
+            headless=False,  # Visible via Xvfb so reCAPTCHA scores well
             args=[
                 "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+                "--disable-gpu",
+                "--disable-dev-shm-usage",
                 "--window-size=1280,900",
             ],
         )
@@ -92,8 +95,16 @@ class DPSSessionManager:
     def _authenticate(self):
         """Log into the DPS scheduler."""
         log("Navigating to DPS scheduler...")
-        self.page.goto(SITE_URL, wait_until="networkidle")
-        time.sleep(1)
+        self.page.goto(SITE_URL, wait_until="networkidle", timeout=30000)
+        time.sleep(3)
+
+        # Wait for Vue app to actually render (not just the HTML shell)
+        try:
+            self.page.wait_for_selector("button", timeout=15000)
+            log("Vue app rendered — buttons visible.")
+        except PwTimeout:
+            log("Vue app may not have rendered. Page text: " +
+                (self.page.text_content("body", timeout=3000) or "")[:200], "WARN")
 
         # Select English — the DPS site uses a Vuetify modal with "English" button
         try:
