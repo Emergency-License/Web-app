@@ -95,46 +95,55 @@ class DPSSessionManager:
         self.page.goto(SITE_URL, wait_until="networkidle")
         time.sleep(1)
 
-        # Select English
+        # Select English — the DPS site uses a Vuetify modal with "English" button
         try:
-            self.page.click("text=ENGLISH", timeout=5000)
-            time.sleep(1)
+            self.page.click("button:has-text('English')", timeout=8000)
+            time.sleep(2)
         except PwTimeout:
             pass
 
-        # Fill login form
+        # Fill login form — DPS uses Vuetify, fields identified by label[for] → input#id
+        # IDs like input-145 are auto-generated and may change, so we use label text
         log("Filling login form...")
         creds = self.credentials
 
-        # Texas Card Number is optional
-        self.page.fill('input[placeholder*="First Name"], input[formcontrolname="FirstName"]',
-                       creds["first_name"], timeout=5000)
-        self.page.fill('input[placeholder*="Last Name"], input[formcontrolname="LastName"]',
-                       creds["last_name"], timeout=5000)
-        self.page.fill('input[placeholder*="Date of Birth"], input[formcontrolname="DateOfBirth"]',
-                       creds["dob"], timeout=5000)
-        self.page.fill('input[placeholder*="Last four"], input[formcontrolname="SsnFour"]',
-                       creds["ssn4"], timeout=5000)
+        def fill_by_label(label_text, value):
+            """Find input by its associated label text (Vuetify pattern)."""
+            label = self.page.locator(f"label:has-text('{label_text}')")
+            input_id = label.get_attribute("for", timeout=5000)
+            if input_id:
+                self.page.fill(f"#{input_id}", value, timeout=5000)
+            else:
+                log(f"Could not find input for label '{label_text}'", "WARN")
 
-        # Select phone or email contact
+        fill_by_label("First Name", creds["first_name"])
+        fill_by_label("Last Name", creds["last_name"])
+        # DOB field has a stable ID
+        self.page.fill("#dob", creds["dob"], timeout=5000)
+        # SSN field has a stable ID
+        self.page.fill("#last4Ssn", creds["ssn4"], timeout=5000)
+
+        # Select phone or email contact via radio button label
         if creds.get("phone"):
             try:
-                self.page.click('text=Cell Phone', timeout=3000)
-                self.page.fill('input[placeholder*="###"], input[formcontrolname="CellPhone"]',
-                               creds["phone"], timeout=5000)
+                # Click the "Cell Phone" radio label (not the input field label)
+                self.page.locator("label:has-text('Cell Phone')").first.click(timeout=3000)
+                time.sleep(0.5)
+                self.page.fill("#cellPhone", creds["phone"], timeout=5000)
             except PwTimeout:
                 pass
         elif creds.get("email"):
             try:
-                self.page.click('text=Email', timeout=3000)
-                self.page.fill('input[type="email"], input[formcontrolname="Email"]',
-                               creds["email"], timeout=5000)
+                self.page.locator("label:has-text('Email')").first.click(timeout=3000)
+                time.sleep(0.5)
+                # Email input appears after clicking the radio
+                self.page.fill("input[type='email'], #email", creds["email"], timeout=5000)
             except PwTimeout:
                 pass
 
-        # Click LOG ON — reCAPTCHA Enterprise runs invisibly
+        # Click Log On — reCAPTCHA Enterprise runs invisibly
         log("Submitting login (reCAPTCHA will score automatically)...")
-        self.page.click('button:has-text("LOG ON"), button:has-text("Log On")')
+        self.page.click("button:has-text('Log On')")
 
         # Wait for successful login (service selection page appears)
         try:
