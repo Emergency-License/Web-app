@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
+import { sendWelcomeSMS } from "@/lib/sms";
+import { sendWelcomeEmail } from "@/lib/email";
 
 /**
  * POST /api/subscribe
  *
  * Registers a user for appointment alerts.
- * Stores subscriber info in a JSON file (will migrate to DB later).
+ * Stores subscriber info in a JSON file (will migrate to Vercel KV/Postgres later).
+ * Sends a welcome SMS or email confirmation.
  *
  * Body: { email?, phone?, zipCode, maxDistance, service }
  */
@@ -74,12 +77,14 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const dist = Math.min(Number(maxDistance) || 50, 250);
+
     const subscriber: Subscriber = {
       id: `sub_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       email: email || undefined,
       phone: phone || undefined,
       zipCode,
-      maxDistance: Math.min(Number(maxDistance) || 50, 250),
+      maxDistance: dist,
       service: service || "renewal",
       active: true,
       createdAt: new Date().toISOString(),
@@ -88,9 +93,21 @@ export async function POST(request: NextRequest) {
     subscribers.push(subscriber);
     await writeSubscribers(subscribers);
 
+    // Send welcome notification (fire-and-forget, don't block the response)
+    if (phone) {
+      sendWelcomeSMS(phone, zipCode, dist).catch((err) =>
+        console.error("Welcome SMS error:", err)
+      );
+    }
+    if (email) {
+      sendWelcomeEmail(email, zipCode, dist).catch((err) =>
+        console.error("Welcome email error:", err)
+      );
+    }
+
     return NextResponse.json({
       success: true,
-      message: `We'll alert you when appointments open within ${subscriber.maxDistance} miles of ${zipCode}.`,
+      message: `We'll alert you when appointments open within ${dist} miles of ${zipCode}.`,
       subscriber: { id: subscriber.id },
     });
   } catch (error) {

@@ -46,3 +46,5 @@ next-env.d.ts
 
 # launch config (local dev)
 .claude/launch.json
+
+.vercel
