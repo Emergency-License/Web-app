@@ -1,49 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import { promises as fs } from "fs";
-import path from "path";
 import { sendSlotSMS } from "@/lib/sms";
 import { sendSlotEmail } from "@/lib/email";
+import {
+  getSubscribers,
+  getSentAlerts,
+  saveSentAlerts,
+  type Subscriber,
+  type SentAlert,
+} from "@/lib/storage";
 import type { SlotInfo } from "@/lib/sms";
 
 /**
  * GET /api/cron/check-slots
  *
- * Vercel Cron Job — runs on a schedule to check DPS availability
- * for all active subscribers and send notifications for new slots.
+ * Vercel Cron Job — runs every 5 min to check DPS availability
+ * for all active subscribers and send SMS/email notifications.
  *
- * Protected by CRON_SECRET header.
- *
- * Flow:
- *  1. Load all active subscribers
- *  2. Group by zip+service to minimize API calls
- *  3. Call Session Manager for each group
- *  4. Compare results against known slots
- *  5. Notify subscribers about new slots
- *  6. Record sent notifications to prevent duplicates
+ * Protected by CRON_SECRET header (set by Vercel automatically).
  */
 
 const SESSION_API = process.env.SESSION_MANAGER_URL || "http://127.0.0.1:8100";
-const SUBSCRIBERS_FILE = path.join(process.cwd(), "data", "subscribers.json");
-const SENT_ALERTS_FILE = path.join(process.cwd(), "data", "sent-alerts.json");
 
 const SERVICE_TYPE_IDS: Record<string, number> = {
   renewal: 71, new: 81, id: 15, cdl: 170, permit: 78, change: 72,
-};
-
-type Subscriber = {
-  id: string;
-  email?: string;
-  phone?: string;
-  zipCode: string;
-  maxDistance: number;
-  service: string;
-  active: boolean;
-};
-
-type SentAlert = {
-  subscriberId: string;
-  slotKey: string; // "locationId:date"
-  sentAt: string;
 };
 
 type DPSLocation = {
@@ -56,22 +35,6 @@ type DPSLocation = {
   NextAvailableDate: string;
   FirstAvailableDate?: string;
 };
-
-// ── Data helpers ──
-
-async function readJSON<T>(filePath: string, fallback: T): Promise<T> {
-  try {
-    const data = await fs.readFile(filePath, "utf-8");
-    return JSON.parse(data);
-  } catch {
-    return fallback;
-  }
-}
-
-async function writeJSON(filePath: string, data: unknown): Promise<void> {
-  await fs.mkdir(path.dirname(filePath), { recursive: true });
-  await fs.writeFile(filePath, JSON.stringify(data, null, 2));
-}
 
 // ── Session Manager call ──
 
@@ -123,14 +86,14 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const subscribers: Subscriber[] = await readJSON(SUBSCRIBERS_FILE, []);
-  const active = subscribers.filter((s) => s.active);
+  const allSubscribers = await getSubscribers();
+  const active = allSubscribers.filter((s) => s.active);
 
   if (active.length === 0) {
     return NextResponse.json({ status: "ok", message: "No active subscribers" });
   }
 
-  const sentAlerts: SentAlert[] = await readJSON(SENT_ALERTS_FILE, []);
+  const sentAlerts = await getSentAlerts();
   const sentKeys = new Set(sentAlerts.map((a) => `${a.subscriberId}:${a.slotKey}`));
   const newAlerts: SentAlert[] = [];
   let totalNotified = 0;
@@ -259,7 +222,7 @@ export async function GET(request: NextRequest) {
   const recentAlerts = [...sentAlerts, ...newAlerts].filter(
     (a) => a.sentAt > sevenDaysAgo
   );
-  await writeJSON(SENT_ALERTS_FILE, recentAlerts);
+  await saveSentAlerts(recentAlerts);
 
   return NextResponse.json({
     status: "ok",

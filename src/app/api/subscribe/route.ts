@@ -1,52 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { promises as fs } from "fs";
-import path from "path";
 import { sendWelcomeSMS } from "@/lib/sms";
 import { sendWelcomeEmail } from "@/lib/email";
+import { addSubscriber, findDuplicateSubscriber } from "@/lib/storage";
 
 /**
  * POST /api/subscribe
  *
  * Registers a user for appointment alerts.
- * Stores subscriber info in a JSON file (will migrate to Vercel KV/Postgres later).
- * Sends a welcome SMS or email confirmation.
+ * Stores in Vercel Blob. Sends welcome SMS/email.
  *
  * Body: { email?, phone?, zipCode, maxDistance, service }
  */
-
-const SUBSCRIBERS_FILE = path.join(process.cwd(), "data", "subscribers.json");
-
-type Subscriber = {
-  id: string;
-  email?: string;
-  phone?: string;
-  zipCode: string;
-  maxDistance: number;
-  service: string;
-  active: boolean;
-  createdAt: string;
-};
-
-async function readSubscribers(): Promise<Subscriber[]> {
-  try {
-    const data = await fs.readFile(SUBSCRIBERS_FILE, "utf-8");
-    return JSON.parse(data);
-  } catch {
-    return [];
-  }
-}
-
-async function writeSubscribers(subs: Subscriber[]): Promise<void> {
-  await fs.mkdir(path.dirname(SUBSCRIBERS_FILE), { recursive: true });
-  await fs.writeFile(SUBSCRIBERS_FILE, JSON.stringify(subs, null, 2));
-}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { email, phone, zipCode, maxDistance, service } = body;
 
-    // Validate
     if (!email && !phone) {
       return NextResponse.json(
         { error: "Email or phone number required" },
@@ -60,15 +30,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const subscribers = await readSubscribers();
-
     // Check for duplicate
-    const existing = subscribers.find(
-      (s) =>
-        s.active &&
-        s.zipCode === zipCode &&
-        ((email && s.email === email) || (phone && s.phone === phone))
-    );
+    const existing = await findDuplicateSubscriber(zipCode, email, phone);
     if (existing) {
       return NextResponse.json({
         success: true,
@@ -79,7 +42,7 @@ export async function POST(request: NextRequest) {
 
     const dist = Math.min(Number(maxDistance) || 50, 250);
 
-    const subscriber: Subscriber = {
+    const subscriber = {
       id: `sub_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       email: email || undefined,
       phone: phone || undefined,
@@ -90,10 +53,9 @@ export async function POST(request: NextRequest) {
       createdAt: new Date().toISOString(),
     };
 
-    subscribers.push(subscriber);
-    await writeSubscribers(subscribers);
+    await addSubscriber(subscriber);
 
-    // Send welcome notification (fire-and-forget, don't block the response)
+    // Send welcome notification (fire-and-forget)
     if (phone) {
       sendWelcomeSMS(phone, zipCode, dist).catch((err) =>
         console.error("Welcome SMS error:", err)
