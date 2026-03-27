@@ -16,6 +16,7 @@ const SERVICE_TYPE_IDS: Record<string, number> = {
  * Falls back to localhost for local dev.
  */
 const SESSION_API = process.env.SESSION_MANAGER_URL || "http://127.0.0.1:8100";
+const SESSION_SECRET = process.env.SESSION_MANAGER_SECRET || "";
 
 type DPSLocation = {
   Id: number;
@@ -40,9 +41,11 @@ type DPSDateSlot = {
  */
 async function callDPSApi(endpoint: string, payload: object): Promise<unknown | null> {
   try {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (SESSION_SECRET) headers["Authorization"] = `Bearer ${SESSION_SECRET}`;
     const resp = await fetch(`${SESSION_API}/api-call`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ endpoint, payload }),
       signal: AbortSignal.timeout(15000),
     });
@@ -60,7 +63,10 @@ async function callDPSApi(endpoint: string, payload: object): Promise<unknown | 
  */
 async function isSessionManagerHealthy(): Promise<boolean> {
   try {
+    const headers: Record<string, string> = {};
+    if (SESSION_SECRET) headers["Authorization"] = `Bearer ${SESSION_SECRET}`;
     const resp = await fetch(`${SESSION_API}/health`, {
+      headers,
       signal: AbortSignal.timeout(3000),
     });
     if (!resp.ok) return false;

@@ -25,6 +25,7 @@ Usage:
 
 import argparse
 import json
+import os
 import sys
 import time
 import threading
@@ -235,8 +236,21 @@ class SessionAPIHandler(BaseHTTPRequestHandler):
     """HTTP API for the poll worker to access session state."""
 
     manager: DPSSessionManager = None  # Set by main()
+    secret: str = None  # Set by main() — if set, all requests must include it
+
+    def _check_auth(self) -> bool:
+        """Verify Bearer token if a secret is configured."""
+        if not self.secret:
+            return True
+        auth = self.headers.get("Authorization", "")
+        if auth == f"Bearer {self.secret}":
+            return True
+        self._respond(401, {"error": "Unauthorized"})
+        return False
 
     def do_GET(self):
+        if not self._check_auth():
+            return
         if self.path == "/health":
             self._respond(200, {
                 "status": "ok" if self.manager.is_healthy() else "expired",
@@ -253,6 +267,8 @@ class SessionAPIHandler(BaseHTTPRequestHandler):
             self._respond(404, {"error": "Not found"})
 
     def do_POST(self):
+        if not self._check_auth():
+            return
         if self.path == "/api-call":
             content_len = int(self.headers.get("Content-Length", 0))
             body = json.loads(self.rfile.read(content_len))
@@ -295,11 +311,15 @@ def main():
     parser.add_argument("--phone", default=None, help="Cell phone number")
     parser.add_argument("--email", default=None, help="Email address")
     parser.add_argument("--port", type=int, default=8100, help="API port (default 8100)")
+    parser.add_argument("--secret", default=None, help="Bearer token for API auth (or DPS_SESSION_SECRET env var)")
+    parser.add_argument("--bind", default="0.0.0.0", help="Bind address (default 0.0.0.0)")
     args = parser.parse_args()
 
     if not args.phone and not args.email:
         print("ERROR: Provide either --phone or --email")
         sys.exit(1)
+
+    secret = args.secret or os.environ.get("DPS_SESSION_SECRET")
 
     credentials = {
         "first_name": args.first_name,
@@ -324,8 +344,11 @@ def main():
 
     # Start HTTP API
     SessionAPIHandler.manager = manager
-    server = HTTPServer(("127.0.0.1", args.port), SessionAPIHandler)
-    log(f"Session API listening on http://127.0.0.1:{args.port}")
+    SessionAPIHandler.secret = secret
+    server = HTTPServer((args.bind, args.port), SessionAPIHandler)
+    log(f"Session API listening on http://{args.bind}:{args.port}")
+    if secret:
+        log(f"Auth enabled — requests require 'Authorization: Bearer <token>'")
     log(f"  GET  /health       — Check session status")
     log(f"  GET  /cookies      — Get session cookies")
     log(f"  POST /api-call     — Proxy a DPS API call")

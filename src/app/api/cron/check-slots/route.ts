@@ -20,6 +20,7 @@ import type { SlotInfo } from "@/lib/sms";
  */
 
 const SESSION_API = process.env.SESSION_MANAGER_URL || "http://127.0.0.1:8100";
+const SESSION_SECRET = process.env.SESSION_MANAGER_SECRET || "";
 
 const SERVICE_TYPE_IDS: Record<string, number> = {
   renewal: 71, new: 81, id: 15, cdl: 170, permit: 78, change: 72,
@@ -40,9 +41,11 @@ type DPSLocation = {
 
 async function callDPS(endpoint: string, payload: object): Promise<unknown | null> {
   try {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (SESSION_SECRET) headers["Authorization"] = `Bearer ${SESSION_SECRET}`;
     const resp = await fetch(`${SESSION_API}/api-call`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ endpoint, payload }),
       signal: AbortSignal.timeout(15000),
     });
@@ -57,7 +60,10 @@ async function callDPS(endpoint: string, payload: object): Promise<unknown | nul
 
 async function isSessionHealthy(): Promise<boolean> {
   try {
+    const headers: Record<string, string> = {};
+    if (SESSION_SECRET) headers["Authorization"] = `Bearer ${SESSION_SECRET}`;
     const resp = await fetch(`${SESSION_API}/health`, {
+      headers,
       signal: AbortSignal.timeout(3000),
     });
     if (!resp.ok) return false;
