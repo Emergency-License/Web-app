@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# session data
+/services/.sessions/
+/data/subscribers.json
+
+# launch config (local dev)
+.claude/launch.json
