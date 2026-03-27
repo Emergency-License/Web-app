@@ -156,25 +156,44 @@ class DPSSessionManager:
             self._save_cookies()
             log("Authentication successful!")
         except PwTimeout:
-            log("Login may have failed. Check the browser window.", "WARN")
-            # Check for error messages
+            log("Login may have failed. Capturing debug info...", "WARN")
+            # Capture page state for debugging
             try:
-                error = self.page.text_content('.error-message, .alert-danger', timeout=3000)
-                log(f"Login error: {error}", "ERROR")
+                page_url = self.page.url
+                page_title = self.page.title()
+                page_text = self.page.text_content("body", timeout=3000)
+                # Truncate page text for logging
+                snippet = (page_text or "")[:500].replace("\n", " ").strip()
+                log(f"Page URL: {page_url}", "DEBUG")
+                log(f"Page title: {page_title}", "DEBUG")
+                log(f"Page text snippet: {snippet}", "DEBUG")
+                # Save screenshot for debugging
+                screenshot_path = STATE_DIR / "debug-screenshot.png"
+                self.page.screenshot(path=str(screenshot_path))
+                log(f"Screenshot saved to {screenshot_path}", "DEBUG")
+            except Exception as e:
+                log(f"Debug capture failed: {e}", "WARN")
+
+            # Check for error messages (Vuetify alerts)
+            try:
+                error = self.page.text_content('.v-alert, .error-message, .alert-danger, [role="alert"]', timeout=3000)
+                if error:
+                    log(f"Login error message: {error.strip()}", "ERROR")
             except PwTimeout:
-                log("No error message found — login may still be processing.", "WARN")
-                # Give it more time
-                try:
-                    self.page.wait_for_selector(
-                        'text=Select the type of service',
-                        timeout=60000,
-                    )
-                    self.auth_ok = True
-                    self.last_auth_time = datetime.now()
-                    self._save_cookies()
-                    log("Authentication successful (delayed)!")
-                except PwTimeout:
-                    log("Authentication failed. Manual intervention needed.", "ERROR")
+                log("No error message element found.", "WARN")
+
+            # Give it more time — DPS can be slow
+            try:
+                self.page.wait_for_selector(
+                    'text=Select the type of service',
+                    timeout=60000,
+                )
+                self.auth_ok = True
+                self.last_auth_time = datetime.now()
+                self._save_cookies()
+                log("Authentication successful (delayed)!")
+            except PwTimeout:
+                log("Authentication failed after extended wait.", "ERROR")
 
     def _save_cookies(self):
         """Save session cookies to disk and memory."""
