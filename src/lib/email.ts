@@ -21,7 +21,8 @@ export type SlotInfo = {
  */
 export async function sendSlotEmail(
   email: string,
-  slot: SlotInfo
+  slot: SlotInfo,
+  subscriberId?: string
 ): Promise<{ success: boolean; id?: string; error?: string }> {
   const client = getClient();
   if (!client) {
@@ -81,9 +82,9 @@ export async function sendSlotEmail(
           info and select this location to claim the slot.
         </p>
       </div>
-      <div style="padding:16px 24px;color:#94A3B8;font-size:11px;text-align:center;background:#F8FAFC;border-radius:0 0 12px 12px;border:1px solid #E0F0F8;border-top:none">
-        EmergencyLicense.com &mdash; Not affiliated with Texas DPS<br>
-        <a href="https://emergencylicense.com/unsubscribe" style="color:#94A3B8">Unsubscribe</a>
+      <div style="padding:16px 24px;text-align:center;background:#F8FAFC;border-radius:0 0 12px 12px;border:1px solid #E0F0F8;border-top:none">
+        ${subscriberId ? `<a href="https://emergencylicense.com/cancel?id=${subscriberId}" style="display:inline-block;padding:8px 20px;background:#F97316;color:white;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px;margin-bottom:8px">Cancel Emergency</a><br>` : ""}
+        <span style="color:#94A3B8;font-size:11px">EmergencyLicense.com &mdash; Not affiliated with Texas DPS</span>
       </div>
     </div>`;
 
@@ -113,7 +114,8 @@ export async function sendSlotEmail(
 export async function sendWelcomeEmail(
   email: string,
   zipCode: string,
-  maxDistance: number
+  maxDistance: number,
+  subscriberId?: string
 ): Promise<{ success: boolean; id?: string; error?: string }> {
   const client = getClient();
   if (!client) {
@@ -153,9 +155,9 @@ export async function sendWelcomeEmail(
           <a href="https://emergencylicense.com/#search" style="color:#0284C7">emergencylicense.com</a>
         </p>
       </div>
-      <div style="padding:16px 24px;color:#94A3B8;font-size:11px;text-align:center;background:#F8FAFC;border-radius:0 0 12px 12px;border:1px solid #E0F0F8;border-top:none">
-        EmergencyLicense.com &mdash; Not affiliated with Texas DPS<br>
-        <a href="https://emergencylicense.com/unsubscribe" style="color:#94A3B8">Unsubscribe</a>
+      <div style="padding:16px 24px;text-align:center;background:#F8FAFC;border-radius:0 0 12px 12px;border:1px solid #E0F0F8;border-top:none">
+        ${subscriberId ? `<a href="https://emergencylicense.com/cancel?id=${subscriberId}" style="display:inline-block;padding:8px 20px;background:#F97316;color:white;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px;margin-bottom:8px">Cancel Emergency</a><br>` : ""}
+        <span style="color:#94A3B8;font-size:11px">EmergencyLicense.com &mdash; Not affiliated with Texas DPS</span>
       </div>
     </div>`;
 

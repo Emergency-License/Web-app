@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       );
     }
     if (email) {
-      sendWelcomeEmail(email, zipCode, dist).catch((err) =>
+      sendWelcomeEmail(email, zipCode, dist, subscriber.id).catch((err) =>
         console.error("Welcome email error:", err)
       );
     }

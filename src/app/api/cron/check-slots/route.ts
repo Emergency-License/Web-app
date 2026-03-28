@@ -201,12 +201,12 @@ export async function GET(request: NextRequest) {
         const dedupeKey = `${sub.id}:${slotKey}`;
         if (sentKeys.has(dedupeKey)) continue;
 
-        // Send notifications
+        // Send notifications with subscriberId for cancel links
         if (sub.phone) {
-          await sendSlotSMS(sub.phone, slot);
+          await sendSlotSMS(sub.phone, slot, sub.id);
         }
         if (sub.email) {
-          await sendSlotEmail(sub.email, slot);
+          await sendSlotEmail(sub.email, slot, sub.id);
         }
 
         totalNotified++;
