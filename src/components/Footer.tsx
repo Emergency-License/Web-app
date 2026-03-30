@@ -36,6 +36,12 @@ export default function Footer() {
             <a href="#faq" className="hover:text-white transition-colors cursor-pointer">
               FAQ
             </a>
+            <a href="/privacy" className="hover:text-white transition-colors cursor-pointer">
+              Privacy Policy
+            </a>
+            <a href="/terms" className="hover:text-white transition-colors cursor-pointer">
+              Terms
+            </a>
           </div>
         </div>
 
