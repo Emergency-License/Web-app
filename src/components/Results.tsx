@@ -12,7 +12,7 @@ type Props = {
 
 function AlertSignup({ zipCode, maxDistance }: { zipCode: string; maxDistance: number }) {
   const [contact, setContact] = useState("");
-  const [contactType, setContactType] = useState<"email" | "phone">("phone");
+  const [contactType, setContactType] = useState<"email" | "phone">("email");
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
 
@@ -80,6 +80,7 @@ function AlertSignup({ zipCode, maxDistance }: { zipCode: string; maxDistance: n
           }`}
         >
           Text Me
+          <span className="block text-[10px] text-muted-foreground font-normal">Coming Soon</span>
         </button>
         <button
           type="button"
@@ -94,24 +95,30 @@ function AlertSignup({ zipCode, maxDistance }: { zipCode: string; maxDistance: n
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex gap-2">
-        <input
-          type={contactType === "email" ? "email" : "tel"}
-          inputMode={contactType === "phone" ? "tel" : "email"}
-          placeholder={contactType === "phone" ? "(555) 123-4567" : "your@email.com"}
-          value={contact}
-          onChange={(e) => setContact(e.target.value)}
-          className="flex-1 px-3 py-2.5 text-sm bg-card border border-border rounded-lg focus:ring-2 focus:ring-ring cursor-text"
-          required
-        />
-        <button
-          type="submit"
-          disabled={status === "submitting"}
-          className="px-5 py-2.5 bg-accent hover:bg-accent-hover disabled:opacity-60 text-white text-sm font-bold rounded-lg transition-colors cursor-pointer whitespace-nowrap"
-        >
-          {status === "submitting" ? "..." : "Notify Me"}
-        </button>
-      </form>
+      {contactType === "phone" ? (
+        <div className="text-center py-3 text-sm text-muted-foreground bg-muted rounded-lg">
+          SMS alerts coming soon! Use email for now.
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="flex gap-2">
+          <input
+            type="email"
+            inputMode="email"
+            placeholder="your@email.com"
+            value={contact}
+            onChange={(e) => setContact(e.target.value)}
+            className="flex-1 px-3 py-2.5 text-sm bg-card border border-border rounded-lg focus:ring-2 focus:ring-ring cursor-text"
+            required
+          />
+          <button
+            type="submit"
+            disabled={status === "submitting"}
+            className="px-5 py-2.5 bg-accent hover:bg-accent-hover disabled:opacity-60 text-white text-sm font-bold rounded-lg transition-colors cursor-pointer whitespace-nowrap"
+          >
+            {status === "submitting" ? "..." : "Notify Me"}
+          </button>
+        </form>
+      )}
 
       {status === "error" && (
         <p className="mt-2 text-sm text-destructive">{message}</p>
