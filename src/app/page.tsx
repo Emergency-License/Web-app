@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import HowItWorks from "@/components/HowItWorks";
+import Services from "@/components/Services";
 import SearchForm from "@/components/SearchForm";
 import Results from "@/components/Results";
 import Pricing from "@/components/Pricing";
@@ -36,6 +37,14 @@ export default function Home() {
     zipCode: "",
     maxDistance: 50,
   });
+  const [selectedService, setSelectedService] = useState("renewal");
+  const searchRef = useRef<HTMLElement>(null);
+
+  const handleServiceSelect = (value: string) => {
+    setSelectedService(value);
+    // Scroll to search form
+    searchRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const handleSearch = async (zipCode: string, maxDistance: number, service: string) => {
     setSearch((s) => ({ ...s, loading: true, searched: true, zipCode, maxDistance }));
@@ -62,8 +71,8 @@ export default function Home() {
       <Header />
       <main className="flex-1">
         <Hero />
-        <HowItWorks />
-        <section id="search" className="py-16 md:py-24 bg-white">
+        <Services onSelect={handleServiceSelect} />
+        <section id="search" ref={searchRef} className="py-16 md:py-24 bg-white">
           <div className="max-w-4xl mx-auto px-4 sm:px-6">
             <div className="text-center mb-10">
               <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground">
@@ -74,7 +83,12 @@ export default function Home() {
                 scan every DPS office in range.
               </p>
             </div>
-            <SearchForm onSearch={handleSearch} loading={search.loading} />
+            <SearchForm
+              onSearch={handleSearch}
+              loading={search.loading}
+              selectedService={selectedService}
+              onServiceChange={setSelectedService}
+            />
             {search.searched && (
               <Results
                 loading={search.loading}
@@ -85,6 +99,7 @@ export default function Home() {
             )}
           </div>
         </section>
+        <HowItWorks />
         <Pricing />
         <FAQ />
       </main>

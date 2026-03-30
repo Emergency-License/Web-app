@@ -16,13 +16,20 @@ const SERVICE_OPTIONS = [
 type Props = {
   onSearch: (zipCode: string, maxDistance: number, service: string) => void;
   loading: boolean;
+  selectedService?: string;
+  onServiceChange?: (value: string) => void;
 };
 
-export default function SearchForm({ onSearch, loading }: Props) {
+export default function SearchForm({ onSearch, loading, selectedService, onServiceChange }: Props) {
   const [zipCode, setZipCode] = useState("");
   const [maxDistance, setMaxDistance] = useState(50);
-  const [service, setService] = useState("renewal");
+  const [service, setService] = useState(selectedService || "renewal");
   const [zipError, setZipError] = useState("");
+
+  // Sync when parent changes selectedService (e.g. from Services tiles)
+  if (selectedService && selectedService !== service) {
+    setService(selectedService);
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,7 +93,10 @@ export default function SearchForm({ onSearch, loading }: Props) {
           <select
             id="service"
             value={service}
-            onChange={(e) => setService(e.target.value)}
+            onChange={(e) => {
+              setService(e.target.value);
+              onServiceChange?.(e.target.value);
+            }}
             className="w-full px-4 py-3 text-lg bg-background border border-border rounded-xl transition-colors focus:ring-2 focus:ring-ring focus:border-primary cursor-pointer appearance-none"
             style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
