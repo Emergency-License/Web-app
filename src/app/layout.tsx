@@ -4,19 +4,23 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Emergency License | Get a Texas DPS Appointment Fast",
+  title: "Emergency License | Get a Texas DMV / DPS Appointment Fast",
   description:
-    "Can't get a Texas DPS appointment for weeks? We monitor cancellations 24/7 and alert you the moment a slot opens near you. Driver license renewal, new license, ID cards and more.",
+    "Can't get a Texas DMV or DPS appointment for weeks? We monitor all Texas DPS driver license offices 24/7 and alert you the moment a cancellation opens near you.",
   keywords: [
+    "Texas DMV appointment",
+    "Texas DMV appointment cancellation",
     "Texas DPS appointment",
     "Texas DPS appointment cancellation",
+    "get Texas DMV appointment fast",
     "get DPS appointment fast",
     "Texas driver license appointment",
+    "DMV appointment available today",
     "DPS appointment available today",
-    "Texas DMV appointment",
-    "driver license renewal Texas",
-    "DPS appointment alert",
+    "Texas DMV cancellation alert",
     "Texas DPS cancellation alert",
+    "driver license renewal Texas",
+    "emergency DMV appointment Texas",
     "emergency DPS appointment Texas",
   ],
   metadataBase: new URL("https://emergencylicense.com"),
@@ -24,9 +28,9 @@ export const metadata: Metadata = {
     canonical: "https://emergencylicense.com",
   },
   openGraph: {
-    title: "Get a Texas DPS Appointment Fast | Emergency License",
+    title: "Get a Texas DMV / DPS Appointment Fast | Emergency License",
     description:
-      "Can't get a Texas DPS appointment for weeks? We monitor cancellations 24/7 and alert you the moment a slot opens near you.",
+      "Can't get a Texas DMV or DPS appointment for weeks? We monitor all Texas DPS driver license offices 24/7 and alert you the moment a cancellation opens near you.",
     type: "website",
     url: "https://emergencylicense.com",
     siteName: "Emergency License",

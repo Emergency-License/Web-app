@@ -27,13 +27,13 @@ export default function Hero() {
           Stop Waiting Weeks
           <br />
           <span className="text-primary-light">
-            for a DPS Appointment
+            for a Texas DMV Appointment
           </span>
         </h1>
 
         <p className="mt-6 text-lg md:text-xl text-white/80 max-w-2xl mx-auto leading-relaxed">
-          We monitor every Texas DPS office 24/7 and alert you the instant an
-          appointment opens near you. Most users book within 48 hours.
+          We monitor every Texas DPS office 24/7 and alert you the instant a
+          driver license appointment opens near you. Most users book within 48 hours.
         </p>
 
         {/* Stats bar */}
