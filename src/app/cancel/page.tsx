@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { analytics } from "@/lib/analytics";
 
 function CancelContent() {
   const searchParams = useSearchParams();
@@ -29,6 +30,7 @@ function CancelContent() {
       if (data.success) {
         setStatus("done");
         setMessage(data.message);
+        analytics.emergencyCancelled();
       } else {
         setStatus("error");
         setMessage(data.error || "Something went wrong.");

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { AppointmentSlot } from "@/app/page";
+import { analytics } from "@/lib/analytics";
 
 type Props = {
   loading: boolean;
@@ -35,6 +36,7 @@ function AlertSignup({ zipCode, maxDistance }: { zipCode: string; maxDistance: n
       if (data.success) {
         setStatus("success");
         setMessage(data.message);
+        analytics.alertSubscribed(contactType as "email" | "phone", zipCode, maxDistance);
       } else {
         setStatus("error");
         setMessage(data.error || "Something went wrong");
@@ -128,6 +130,16 @@ function AlertSignup({ zipCode, maxDistance }: { zipCode: string; maxDistance: n
 }
 
 export default function Results({ loading, results, zipCode, maxDistance }: Props) {
+  useEffect(() => {
+    if (loading) return;
+    if (results.length > 0) {
+      analytics.resultsFound(results.length, zipCode, results[0]?.serviceType || "renewal");
+    } else {
+      analytics.noResults(zipCode, maxDistance, "renewal");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, results.length]);
+
   if (loading) {
     return (
       <div className="mt-8 text-center py-16">
@@ -242,6 +254,7 @@ export default function Results({ loading, results, zipCode, maxDistance }: Prop
                 href="https://public.txdpsscheduler.com/"
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => analytics.bookClicked(slot.locationName, slot.distance, slot.date)}
                 className="inline-flex items-center gap-2 px-6 py-2.5 bg-accent hover:bg-accent-hover text-white text-sm font-bold rounded-lg transition-colors cursor-pointer"
               >
                 Book This Slot

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { analytics } from "@/lib/analytics";
 
 const DISTANCE_MARKS = [10, 25, 50, 100, 150, 200, 250];
 
@@ -40,6 +41,7 @@ export default function SearchForm({ onSearch, loading, selectedService, onServi
       return;
     }
 
+    analytics.searchTriggered(zipCode, maxDistance, service);
     onSearch(zipCode, maxDistance, service);
   };
 
