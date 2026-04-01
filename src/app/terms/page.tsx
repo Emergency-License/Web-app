@@ -20,7 +20,7 @@ export default function TermsPage() {
           Terms &amp; Conditions
         </h1>
         <p className="text-muted-foreground mb-10">
-          Last updated: March 28, 2026
+          Last updated: April 1, 2026
         </p>
 
         <div className="space-y-8 text-card-foreground leading-relaxed">
@@ -52,29 +52,37 @@ export default function TermsPage() {
 
           <section>
             <h2 className="font-heading text-xl font-semibold mb-3">
-              3. SMS Consent &amp; Messaging
+              3. SMS Program Terms
             </h2>
+            <p className="mb-3">
+              <strong>Program name:</strong> Emergency License DPS Appointment Alerts<br />
+              <strong>Program description:</strong> Automated SMS notifications sent when Texas DPS driver license appointment slots become available near your zip code.
+            </p>
             <ul className="list-disc pl-6 space-y-2">
               <li>
-                By providing your phone number, you expressly consent to
-                receive automated SMS messages from Emergency License regarding
-                DPS appointment availability.
+                By entering your mobile phone number on emergencylicense.com and clicking &ldquo;Notify Me,&rdquo; you expressly consent to receive recurring automated SMS text messages from Emergency License at the number provided. Consent is not a condition of purchase.
               </li>
               <li>
-                Message frequency varies based on appointment availability.
-                You may receive multiple messages per day when slots open.
+                <strong>Message frequency:</strong> Varies. You may receive multiple messages per day when appointment slots open near you. Frequency depends on DPS cancellation activity in your area.
               </li>
               <li>
-                Message and data rates may apply. Check with your mobile
-                carrier for details.
+                <strong>Message &amp; data rates may apply.</strong> Check with your mobile carrier for details.
               </li>
               <li>
-                You may opt out at any time by replying <strong>CANCEL</strong>{" "}
-                to any message. Reply <strong>HELP</strong> for assistance.
+                <strong>To stop:</strong> Reply <strong>STOP</strong> or <strong>CANCEL</strong> to any message at any time. You will receive a confirmation and no further messages will be sent.
               </li>
               <li>
-                Supported carriers include major US carriers. Service may not
-                be available on all carriers.
+                <strong>For help:</strong> Reply <strong>HELP</strong> to any message or email{" "}
+                <a href="mailto:support@emergencylicense.com" className="text-primary hover:text-primary-dark underline">
+                  support@emergencylicense.com
+                </a>.
+              </li>
+              <li>
+                Supported carriers include AT&amp;T, Verizon, T-Mobile, Sprint, and most major US carriers. Carrier support is not guaranteed.
+              </li>
+              <li>
+                We do not share your mobile number with third parties for marketing purposes. See our{" "}
+                <a href="/privacy" className="text-primary hover:text-primary-dark underline">Privacy Policy</a>.
               </li>
             </ul>
           </section>

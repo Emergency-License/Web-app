@@ -20,7 +20,7 @@ export default function PrivacyPage() {
           Privacy Policy
         </h1>
         <p className="text-muted-foreground mb-10">
-          Last updated: March 28, 2026
+          Last updated: April 1, 2026
         </p>
 
         <div className="space-y-8 text-card-foreground leading-relaxed">
@@ -69,9 +69,10 @@ export default function PrivacyPage() {
               <li>Process your subscription and manage your alert preferences.</li>
               <li>Respond to your cancellation or support requests.</li>
             </ul>
-            <p className="mt-3">
-              We do <strong>not</strong> sell, rent, or share your personal
-              information with third parties for marketing purposes.
+            <p className="mt-3 font-semibold text-foreground">
+              We do <strong>not</strong> sell, rent, or share your phone number
+              or personal information with third parties for marketing purposes.
+              Your data is used solely to deliver DPS appointment alerts to you.
             </p>
           </section>
 
@@ -92,8 +93,9 @@ export default function PrivacyPage() {
                 plan.
               </li>
               <li>
-                You can opt out at any time by replying <strong>CANCEL</strong> to
-                any message or visiting our cancellation page.
+                To stop receiving messages, reply <strong>STOP</strong> or{" "}
+                <strong>CANCEL</strong> to any message. You will receive a
+                one-time confirmation and no further messages will be sent.
               </li>
               <li>
                 For help, reply <strong>HELP</strong> to any message or email{" "}
