@@ -52,7 +52,7 @@ export default function SearchForm({ onSearch, loading, selectedService, onServi
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-card rounded-2xl border border-border shadow-lg p-6 md:p-8"
+      className="bg-card rounded-2xl border border-slate-200 shadow-xl p-6 md:p-8"
     >
       <div className="grid md:grid-cols-2 gap-6">
         {/* Zip Code */}

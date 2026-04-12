@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
 import Stripe from "stripe";
 import type { Subscriber } from "@/lib/storage";
+import { sendWelcomeSMS } from "@/lib/sms";
+import { sendWelcomeEmail } from "@/lib/email";
 
 /**
  * POST /api/webhooks/stripe
@@ -85,6 +87,18 @@ export async function POST(request: NextRequest) {
         },
       });
       console.log(`[Stripe Webhook] Activated subscriber ${subscriberId}`);
+
+      // Send welcome notifications (fire-and-forget)
+      if (sub.phone) {
+        sendWelcomeSMS(sub.phone, sub.zipCode, sub.maxDistance).catch((err) =>
+          console.error("[Stripe Webhook] Welcome SMS error:", err)
+        );
+      }
+      if (sub.email) {
+        sendWelcomeEmail(sub.email, sub.zipCode, sub.maxDistance, subscriberId).catch((err) =>
+          console.error("[Stripe Webhook] Welcome email error:", err)
+        );
+      }
     } else {
       console.warn(`[Stripe Webhook] Subscriber ${subscriberId} not found in Redis`);
     }
