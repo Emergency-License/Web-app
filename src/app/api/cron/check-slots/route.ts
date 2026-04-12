@@ -223,12 +223,10 @@ export async function GET(request: NextRequest) {
     await new Promise((r) => setTimeout(r, 1000));
   }
 
-  // Persist sent alerts (keep last 7 days to prevent unbounded growth)
-  const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
-  const recentAlerts = [...sentAlerts, ...newAlerts].filter(
-    (a) => a.sentAt > sevenDaysAgo
-  );
-  await saveSentAlerts(recentAlerts);
+  // Persist new sent alerts (additive only — no del+hset)
+  if (newAlerts.length > 0) {
+    await saveSentAlerts(newAlerts);
+  }
 
   return NextResponse.json({
     status: "ok",

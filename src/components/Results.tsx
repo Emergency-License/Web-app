@@ -13,8 +13,8 @@ type Props = {
 
 function AlertSignup({ zipCode, maxDistance }: { zipCode: string; maxDistance: number }) {
   const [contact, setContact] = useState("");
-  const [contactType, setContactType] = useState<"email" | "phone">("email");
-  const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
+  const [contactType, setContactType] = useState<"email" | "phone">("phone");
+  const [status, setStatus] = useState<"idle" | "submitting" | "redirecting" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,6 +22,7 @@ function AlertSignup({ zipCode, maxDistance }: { zipCode: string; maxDistance: n
     setStatus("submitting");
 
     try {
+      // 1. Create subscriber (inactive until payment)
       const res = await fetch("/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -33,13 +34,31 @@ function AlertSignup({ zipCode, maxDistance }: { zipCode: string; maxDistance: n
         }),
       });
       const data = await res.json();
-      if (data.success) {
-        setStatus("success");
-        setMessage(data.message);
-        analytics.alertSubscribed(contactType as "email" | "phone", zipCode, maxDistance);
-      } else {
+      if (!data.success) {
         setStatus("error");
         setMessage(data.error || "Something went wrong");
+        return;
+      }
+
+      analytics.alertSubscribed(contactType as "email" | "phone", zipCode, maxDistance);
+
+      // 2. Create Stripe Checkout session
+      setStatus("redirecting");
+      const checkoutRes = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subscriberId: data.subscriber.id,
+          email: contactType === "email" ? contact : undefined,
+        }),
+      });
+      const checkoutData = await checkoutRes.json();
+
+      if (checkoutData.url) {
+        window.location.href = checkoutData.url;
+      } else {
+        setStatus("error");
+        setMessage("Could not start payment. Please try again.");
       }
     } catch {
       setStatus("error");
@@ -74,7 +93,7 @@ function AlertSignup({ zipCode, maxDistance }: { zipCode: string; maxDistance: n
       <div className="flex gap-1 bg-muted rounded-lg p-1 mb-3">
         <button
           type="button"
-          onClick={() => setContactType("phone")}
+          onClick={() => { setContactType("phone"); setContact(""); }}
           className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors cursor-pointer ${
             contactType === "phone"
               ? "bg-white text-foreground shadow-sm"
@@ -82,11 +101,10 @@ function AlertSignup({ zipCode, maxDistance }: { zipCode: string; maxDistance: n
           }`}
         >
           Text Me
-          <span className="block text-[10px] text-muted-foreground font-normal">Coming Soon</span>
         </button>
         <button
           type="button"
-          onClick={() => setContactType("email")}
+          onClick={() => { setContactType("email"); setContact(""); }}
           className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors cursor-pointer ${
             contactType === "email"
               ? "bg-white text-foreground shadow-sm"
@@ -98,9 +116,33 @@ function AlertSignup({ zipCode, maxDistance }: { zipCode: string; maxDistance: n
       </div>
 
       {contactType === "phone" ? (
-        <div className="text-center py-3 text-sm text-muted-foreground bg-muted rounded-lg">
-          SMS alerts coming soon! Use email for now.
-        </div>
+        <>
+          <form onSubmit={handleSubmit} className="flex gap-2">
+            <input
+              type="tel"
+              inputMode="tel"
+              placeholder="(512) 555-1234"
+              value={contact}
+              onChange={(e) => setContact(e.target.value)}
+              className="flex-1 px-3 py-2.5 text-sm bg-card border border-border rounded-lg focus:ring-2 focus:ring-ring cursor-text"
+              required
+            />
+            <button
+              type="submit"
+              disabled={status === "submitting" || status === "redirecting"}
+              className="px-5 py-2.5 bg-accent hover:bg-accent-hover disabled:opacity-60 text-white text-sm font-bold rounded-lg transition-colors cursor-pointer whitespace-nowrap"
+            >
+              {status === "submitting" ? "..." : status === "redirecting" ? "Redirecting..." : "Notify Me"}
+            </button>
+          </form>
+          <p className="mt-2 text-[10px] text-muted-foreground leading-tight">
+            By entering your mobile number and clicking &quot;Notify Me,&quot; you consent to receive recurring automated SMS
+            text messages from Emergency License at the number provided. Consent is not a condition of purchase.
+            Message frequency varies. Msg &amp; data rates may apply. Reply STOP to cancel, HELP for help. See our{" "}
+            <a href="/privacy" className="underline">Privacy Policy</a> and{" "}
+            <a href="/terms" className="underline">Terms</a>.
+          </p>
+        </>
       ) : (
         <form onSubmit={handleSubmit} className="flex gap-2">
           <input
@@ -114,13 +156,17 @@ function AlertSignup({ zipCode, maxDistance }: { zipCode: string; maxDistance: n
           />
           <button
             type="submit"
-            disabled={status === "submitting"}
+            disabled={status === "submitting" || status === "redirecting"}
             className="px-5 py-2.5 bg-accent hover:bg-accent-hover disabled:opacity-60 text-white text-sm font-bold rounded-lg transition-colors cursor-pointer whitespace-nowrap"
           >
-            {status === "submitting" ? "..." : "Notify Me"}
+            {status === "submitting" ? "..." : status === "redirecting" ? "Redirecting..." : "Notify Me"}
           </button>
         </form>
       )}
+
+      <p className="mt-2 text-[10px] text-center text-muted-foreground">
+        $25 one-time payment &mdash; only charged if you proceed
+      </p>
 
       {status === "error" && (
         <p className="mt-2 text-sm text-destructive">{message}</p>

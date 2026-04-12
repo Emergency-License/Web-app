@@ -49,28 +49,18 @@ export async function POST(request: NextRequest) {
       zipCode,
       maxDistance: dist,
       service: service || "renewal",
-      active: true,
+      active: false,
+      paymentStatus: "pending" as const,
       createdAt: new Date().toISOString(),
     };
 
     await addSubscriber(subscriber);
 
-    // Send welcome notification (fire-and-forget)
-    if (phone) {
-      sendWelcomeSMS(phone, zipCode, dist).catch((err) =>
-        console.error("Welcome SMS error:", err)
-      );
-    }
-    if (email) {
-      sendWelcomeEmail(email, zipCode, dist, subscriber.id).catch((err) =>
-        console.error("Welcome email error:", err)
-      );
-    }
-
     return NextResponse.json({
       success: true,
-      message: `We'll alert you when appointments open within ${dist} miles of ${zipCode}.`,
+      message: `Complete payment to activate alerts within ${dist} miles of ${zipCode}.`,
       subscriber: { id: subscriber.id },
+      requiresPayment: true,
     });
   } catch (error) {
     console.error("Subscribe error:", error);

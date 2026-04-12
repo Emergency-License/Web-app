@@ -54,14 +54,14 @@ export default function Pricing() {
             </a>
           </div>
 
-          {/* Paid tier (coming soon) */}
-          <div className="bg-card rounded-2xl border border-border p-8 opacity-80">
+          {/* Paid tier */}
+          <div className="bg-card rounded-2xl border border-border p-8">
             <h3 className="font-heading text-2xl font-bold text-card-foreground">
               Priority Alerts
             </h3>
             <div className="mt-2 flex items-baseline gap-1">
               <span className="font-heading text-5xl font-extrabold text-foreground">$25</span>
-              <span className="text-muted-foreground">/ appointment</span>
+              <span className="text-muted-foreground">one-time</span>
             </div>
             <p className="mt-3 text-muted-foreground">
               Get alerted by text or email the instant a slot opens — before it shows up for anyone else.
@@ -72,7 +72,7 @@ export default function Pricing() {
                 "24/7 automatic monitoring",
                 "Instant SMS + email alerts",
                 "Priority: notified first",
-                "Pay only if we find a slot",
+                "Pay only once — no recurring fees",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-3">
                   <svg className="w-5 h-5 text-success flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -82,12 +82,12 @@ export default function Pricing() {
                 </li>
               ))}
             </ul>
-            <button
-              disabled
-              className="mt-8 block w-full text-center px-6 py-3 bg-muted text-muted-foreground font-bold rounded-xl cursor-not-allowed"
+            <a
+              href="#search"
+              className="mt-8 block text-center px-6 py-3 bg-accent hover:bg-accent-hover text-white font-bold rounded-xl transition-colors cursor-pointer"
             >
-              Coming Soon
-            </button>
+              Get Priority Alerts — $25
+            </a>
           </div>
         </div>
       </div>

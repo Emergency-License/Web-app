@@ -17,6 +17,10 @@ export type Subscriber = {
   maxDistance: number;
   service: string;
   active: boolean;
+  paymentStatus?: "pending" | "paid";
+  stripeSessionId?: string;
+  paidAt?: string;
+  cancelledAt?: string;
   createdAt: string;
 };
 
@@ -85,9 +89,9 @@ export async function getSentAlerts(): Promise<SentAlert[]> {
 export async function saveSentAlerts(alerts: SentAlert[]): Promise<void> {
   const redis = getRedis();
   if (!redis) return;
-  // Clear old and write new
-  await redis.del("sent-alerts");
   if (alerts.length === 0) return;
+  // ADDITIVE ONLY — never del+hset (race condition: concurrent cron runs
+  // would both read empty set, both fire same alerts, then overwrite each other)
   const entries: Record<string, string> = {};
   for (const a of alerts) {
     entries[`${a.subscriberId}:${a.slotKey}`] = a.sentAt;
